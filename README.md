@@ -318,7 +318,7 @@ The current evaluation uses **15 supported questions** and **5 unsupported quest
 
 <div align="center">
 
-### **Lakshya**
+### **Lakshya Garg**
 
 💻 **RAG · Generative AI · Python**
 
