@@ -316,15 +316,15 @@ The current evaluation uses **15 supported questions** and **5 unsupported quest
 
 ## 👤 Author
 
-<div align="center">
 
-### **Lakshya Garg**
+**Lakshya Garg**
 
 Aspiring Data Scientist passionate about Data Analytics, Machine Learning, and AI-driven solutions.
 
-🐙 GitHub: https://github.com/Lakshyagaarg
-💼 LinkedIn: https://www.linkedin.com/in/lakshya-garg-a43b672b3/
-📧 Email: lakshya.garg5785@gmail.com
+- 🐙 GitHub: https://github.com/Lakshyagaarg
+- 💼 LinkedIn: https://www.linkedin.com/in/lakshya-garg-a43b672b3/
+- 📧 Email: lakshya.garg5785@gmail.com
+
 
 </div>
 
