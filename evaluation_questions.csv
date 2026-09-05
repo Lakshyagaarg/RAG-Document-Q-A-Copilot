@@ -1,0 +1,11 @@
+id,question,source_document,expected_answer
+Q1,What are the four major stages of a basic RAG pipeline?,RAG Fundamentals,"Ingestion, indexing, retrieval, and generation."
+Q2,What chunk size and overlap are recommended for the initial project configuration?,RAG Fundamentals,Chunk size 500 and overlap 50.
+Q3,Which embedding model is used in this project?,Embeddings and Vector Databases,all-MiniLM-L6-v2.
+Q4,What does cosine similarity compare?,Embeddings and Vector Databases,The angle/directional similarity between two vectors.
+Q5,Why is vector-store persistence useful?,Embeddings and Vector Databases,It avoids recomputing embeddings every time the application starts.
+Q6,What should the retrieval function return?,Python RAG Engineering Guide,"A small set of relevant Document objects, with top-k initially set to 3."
+Q7,Why should retrieval and generation remain separate?,Python RAG Engineering Guide,So each layer can be tested and evaluated independently.
+Q8,Where should API keys be stored during development?,Python RAG Engineering Guide,"In environment variables, commonly loaded from a .env file."
+Q9,What should the system do when the answer is absent from retrieved context?,RAG Evaluation Reference,State that the provided documents do not contain enough information rather than inventing an answer.
+Q10,Why should source and page metadata be preserved?,RAG Fundamentals,To trace answers back to their source and page.

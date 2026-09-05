@@ -1,0 +1,48 @@
+# Core LangChain framework
+# Used to build the RAG pipeline and work with documents.
+langchain
+
+# Community integrations for LangChain
+# Provides PyPDFLoader and other third-party integrations.
+langchain-community
+
+# Text splitting utilities
+# Used to split PDF text into smaller chunks for retrieval.
+langchain-text-splitters
+
+# Hugging Face integration for LangChain
+# Used to load the Sentence Transformers embedding model.
+langchain-huggingface
+
+# OpenAI integration for LangChain
+# Kept as a project dependency for LangChain ecosystem compatibility.
+langchain-openai
+
+# ChromaDB integration for LangChain
+# Used to create and load the ChromaDB vector store.
+langchain-chroma
+
+# Vector database
+# Stores document embeddings and enables similarity search.
+chromadb
+
+# Sentence Transformers
+# Provides the all-MiniLM-L6-v2 embedding model.
+sentence-transformers
+
+# Streamlit
+# Used to build the web interface for the RAG application.
+streamlit
+
+# Environment variable management
+# Used to load GEMINI_API_KEY from the .env file.
+python-dotenv
+
+# PDF processing
+# Used by LangChain's PyPDFLoader to extract text from PDFs.
+pypdf
+
+# Google Gemini API
+# Used to send the retrieved context and question to Gemini
+# for grounded answer generation.
+google-genai
