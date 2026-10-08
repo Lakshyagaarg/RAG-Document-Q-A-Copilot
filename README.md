@@ -24,7 +24,7 @@ Built with **Python · LangChain · ChromaDB · Sentence Transformers · Google 
 
 **RAG Document Q&A Copilot** is a document-grounded AI application that allows users to ask questions about technical PDF documents.
 
-Instead of relying only on the language model's internal knowledge, the system first **retrieves relevant information from the documents** and then provides that context to Gemini to generate a grounded answer.
+Instead of relying only on the language model's internal knowledge, the system first **retrieves relevant information from the documents** and then provides that context to Gemini to generate a grounded answer. When the documents don't contain enough evidence, it **abstains instead of guessing**.
 
 It supports both a **pre-built technical knowledge base** and **user-uploaded PDFs**.
 
@@ -39,7 +39,7 @@ It supports both a **pre-built technical knowledge base** and **user-uploaded PD
 | 🧠 **Embeddings** | Generate semantic embeddings with Sentence Transformers |
 | 🗄️ **Vector Database** | Store and search embeddings using ChromaDB |
 | 🔎 **Intelligent Retrieval** | Combine semantic, keyword, and phrase relevance |
-| 🎯 **Top-K Retrieval** | Select the most relevant document chunks |
+| 🎯 **Two-Stage Retrieval** | Retrieve a broad candidate set, rerank, then select the top 3 chunks |
 | 🤖 **Grounded Generation** | Generate answers using retrieved context |
 | 🛡️ **Hallucination Control** | Restrict answers to available document information |
 | 🚫 **Answer Abstention** | Avoid guessing when information is unavailable |
@@ -88,7 +88,7 @@ It supports both a **pre-built technical knowledge base** and **user-uploaded PD
                                │
                                ▼
                     ┌─────────────────────┐
-                    │ 🎯 Top-K Context    │
+                    │ 🎯 Top-3 Context    │
                     └──────────┬──────────┘
                                │
                                ▼
@@ -117,11 +117,27 @@ LOAD → CHUNK → EMBED → STORE → RETRIEVE → RANK → GENERATE → ANSWER
 2. **Chunk** — Text is split using `RecursiveCharacterTextSplitter`.
 3. **Embed** — Chunks are converted into embeddings using `all-MiniLM-L6-v2`.
 4. **Store** — Embeddings are stored in ChromaDB.
-5. **Retrieve** — Relevant chunks are retrieved for the user's question.
-6. **Rank** — Semantic, keyword, and phrase relevance improve ranking.
-7. **Generate** — Retrieved context is provided to Gemini.
-8. **Answer** — Gemini generates a grounded response.
-9. **Abstain** — The system avoids guessing when the required information is unavailable.
+5. **Retrieve** — Up to 15 semantically similar chunks are retrieved for the user's question.
+6. **Rank** — Keyword and phrase-based scoring rerank the candidates, exact duplicates are removed, and repeated chunks from the same source are limited. The top 3 chunks are kept.
+7. **Generate** — The retrieved context is provided to Gemini.
+8. **Answer** — Gemini generates a response grounded in that context.
+9. **Abstain** — If the available evidence is insufficient, the system returns a predefined response instead of guessing.
+
+---
+
+## 🧩 Design Decisions
+
+**Why combine semantic and keyword-based retrieval?**
+Semantic search captures meaning, even when wording differs. Technical queries, however, often depend on exact terms and phrases. A custom ranking step blends semantic relevance with keyword and phrase scoring to balance conceptual relevance with exact-term matching.
+
+**Why retrieve 15 chunks but use only 3?**
+Retrieving too few chunks risks missing relevant information, while passing too many adds unnecessary context. A two-stage process, a broad candidate set followed by reranking, keeps the context focused before it reaches the LLM.
+
+**How are unsupported questions handled?**
+An LLM may answer from its general training even when the documents don't support it. The generation prompt instructs the model to rely on the retrieved context and return a fixed response when the evidence is insufficient. This is an explicit abstention mechanism, but it does not eliminate hallucinations entirely.
+
+**Why evaluate retrieval separately?**
+Measuring retrieval on its own, apart from generation, helps isolate where failures actually occur in the pipeline.
 
 ---
 
@@ -151,25 +167,26 @@ The technical knowledge base covers topics including:
 ## 📁 Project Structure
 
 ```text
-RAG-Doc-Copilot/
+RAG-Document-Q-A-Copilot/
 │
 ├── 📂 data/
 │   └── 📂 pdfs/
 │       └── *.pdf
 │
-├── 📂 src/
-│   ├── app.py
+├── app.py
+├── src/
 │   ├── ingestion.py
 │   ├── embeddings.py
 │   ├── retrieval.py
 │   └── generation.py
-│
+|
 ├── 📂 tests/
 │   └── test_retrieval.py
 │
 ├── 📂 chroma_db/
 │
-├── .env
+├── .env.example
+├── .gitignore
 ├── requirements.txt
 └── README.md
 ```
@@ -181,8 +198,8 @@ RAG-Doc-Copilot/
 ### 1️⃣ Clone the repository
 
 ```bash
-git clone <your-repository-url>
-cd RAG-Doc-Copilot
+git clone https://github.com/Lakshyagaarg/RAG-Document-Q-A-Copilot.git
+cd RAG-Document-Q-A-Copilot
 ```
 
 ### 2️⃣ Create a virtual environment
@@ -191,15 +208,23 @@ cd RAG-Doc-Copilot
 python -m venv rag_env
 ```
 
-### 3️⃣ Activate the environment — Windows
+### 3️⃣ Activate the environment
+
+**Windows (PowerShell)**
 
 ```powershell
 .\rag_env\Scripts\Activate.ps1
 ```
 
+**macOS / Linux**
+
+```bash
+source rag_env/bin/activate
+```
+
 ### 4️⃣ Install dependencies
 
-```powershell
+```bash
 pip install -r requirements.txt
 ```
 
@@ -207,13 +232,21 @@ pip install -r requirements.txt
 
 ## 🔐 Gemini API Configuration
 
-Create a `.env` file in the project root:
+Copy the example environment file and add your own key:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell, use `copy .env.example .env`.
+
+Then edit `.env`:
 
 ```env
 GEMINI_API_KEY=your_api_key_here
 ```
 
-> ⚠️ **Important:** Never commit your `.env` file or API key to GitHub.
+> ⚠️ **Important:** Never commit your `.env` file or API key to GitHub. Make sure `.env` and `chroma_db/` are listed in `.gitignore`.
 
 ---
 
@@ -221,7 +254,7 @@ GEMINI_API_KEY=your_api_key_here
 
 From the project root:
 
-```powershell
+```bash
 cd src
 python embeddings.py
 ```
@@ -240,13 +273,13 @@ This will:
 
 From the project root:
 
-```powershell
+```bash
 python -m pytest tests/test_retrieval.py
 ```
 
 Or run the retrieval module directly:
 
-```powershell
+```bash
 cd src
 python retrieval.py
 ```
@@ -257,8 +290,8 @@ python retrieval.py
 
 From the project root:
 
-```powershell
-python -m streamlit run src/app.py
+```bash
+python -m streamlit run app.py
 ```
 
 The application provides:
@@ -301,37 +334,34 @@ The current evaluation uses **15 supported questions** and **5 unsupported quest
 
 > These metrics evaluate the **retrieval component**, not the quality of Gemini's generated answers.
 
+### ⚠️ Limitations
+
+- The evaluation set is small (20 questions), so results do not guarantee performance on unseen queries or documents.
+- The custom reranking has not yet been compared against a semantic-only baseline, so its exact impact is not measured.
+- Abstention reduces unsupported answers but does not eliminate hallucinations entirely.
+
 ---
 
 ## 🔮 Future Improvements
 
-- 🔀 Hybrid BM25 + vector retrieval
-- 🏆 Cross-encoder reranking
+- 🔀 Replace custom keyword scoring with BM25
+- 🏆 Add cross-encoder reranking
+- 🆚 Compare against a semantic-only retrieval baseline
+- 📊 Expand the evaluation dataset
 - 🏷️ Advanced metadata filtering
 - 💬 Conversation-aware retrieval
-- 📊 Expanded evaluation datasets
 - ⏱️ Retrieval and generation latency monitoring
 
 ---
 
 ## 👤 Author
 
+### **Lakshya Garg**
 
-**Lakshya Garg**
-
-Aspiring Data Scientist passionate about Data Analytics, Machine Learning, and AI-driven solutions.
+Final-year B.Tech (AI & ML) student building practical AI systems with retrieval, reasoning, and grounded generation.
 
 - 🐙 GitHub: https://github.com/Lakshyagaarg
 - 💼 LinkedIn: https://www.linkedin.com/in/lakshya-garg-a43b672b3/
 - 📧 Email: lakshya.garg5785@gmail.com
 
-
-</div>
-
----
-
-<div align="center">
-
-⭐ **If you find this project useful, consider giving it a star!** ⭐
-
-</div>
+📬 Currently open to AI/ML internship and entry-level opportunities.
